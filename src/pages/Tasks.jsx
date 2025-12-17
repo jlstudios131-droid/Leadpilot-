@@ -1,104 +1,90 @@
-import { mockTasks } from '@/data/mock';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 import Card from '@/components/ui/Card';
-import { CheckCircle, Clock, XCircle, Search, Calendar } from 'lucide-react';
-import clsx from 'clsx';
-
-const getDueDateStyle = (dueDate, status) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const taskDate = new Date(dueDate);
-  taskDate.setHours(0, 0, 0, 0);
-
-  if (status === 'Completed') {
-    return 'text-success-600';
-  }
-  
-  if (taskDate < today) {
-    return 'text-danger-600 font-semibold'; // Atrasada
-  }
-  if (taskDate.getTime() === today.getTime()) {
-    return 'text-warning-700 font-semibold'; // Hoje
-  }
-  
-  return 'text-muted-500'; // Futuro
-};
+import { CheckCircle, Circle, Clock, Plus, Loader2 } from 'lucide-react';
 
 export default function Tasks() {
-  const pendingTasks = mockTasks.filter(t => t.status === 'Pending');
-  const completedTasks = mockTasks.filter(t => t.status === 'Completed');
+  const { user } = useAuth();
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*')
+      .order('due_date', { ascending: true });
+
+    if (error) console.error(error);
+    else setTasks(data);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchTasks(); }, []);
+
+  const toggleTask = async (id, currentStatus) => {
+    const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
+    const { error } = await supabase
+      .from('tasks')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    if (error) alert('Erro ao atualizar');
+    else fetchTasks();
+  };
+
+  const addTask = async () => {
+    const title = prompt('O que precisa ser feito?');
+    if (!title) return;
+    
+    const { error } = await supabase
+      .from('tasks')
+      .insert([{ title, user_id: user.id, status: 'Pending' }]);
+
+    if (error) alert('Erro ao criar tarefa');
+    else fetchTasks();
+  };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-muted-900 md:text-3xl">Minhas Tarefas</h1>
-      
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="relative w-full sm:w-1/2">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-400" />
-          <input 
-            type="text"
-            placeholder="Buscar por título ou lead..."
-            className="input pl-10"
-          />
-        </div>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-muted-900">Minhas Tarefas</h1>
+        <button onClick={addTask} className="btn-primary">
+          <Plus className="w-5 h-5 mr-2" /> Nova Tarefa
+        </button>
       </div>
 
-      {/* 1. Tarefas Pendentes */}
       <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4 text-muted-900 flex items-center">
-          <Clock className="w-5 h-5 mr-2 text-warning-500" />
-          Tarefas Pendentes ({pendingTasks.length})
-        </h2>
-        
-        <div className="space-y-4">
-          {pendingTasks.map((task) => (
-            <div key={task.id} className="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-muted-50 transition-colors rounded-md">
-              
-              <div className="flex items-start flex-grow min-w-0">
-                <button className="flex-shrink-0 text-muted-400 hover:text-success-600 transition mr-3">
-                  <CheckCircle className="w-6 h-6" />
-                </button>
-                
-                <div className="min-w-0">
-                  <p className="text-base font-medium text-muted-900 truncate">{task.title}</p>
-                  {task.leadName && (
-                    <p className="text-sm text-muted-500 truncate">Lead: {task.leadName}</p>
-                  )}
+        {loading ? (
+          <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
+        ) : (
+          <div className="space-y-4">
+            {tasks.map((task) => (
+              <div key={task.id} className="flex items-center justify-between p-3 border-b last:border-b-0">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => toggleTask(task.id, task.status)}>
+                    {task.status === 'Completed' ? (
+                      <CheckCircle className="w-6 h-6 text-success-500" />
+                    ) : (
+                      <Circle className="w-6 h-6 text-muted-300" />
+                    )}
+                  </button>
+                  <span className={task.status === 'Completed' ? 'line-through text-muted-400' : 'text-muted-900'}>
+                    {task.title}
+                  </span>
                 </div>
+                {task.due_date && (
+                  <div className="text-xs text-muted-500 flex items-center">
+                    <Clock className="w-3 h-3 mr-1" /> {task.due_date}
+                  </div>
+                )}
               </div>
-              
-              <div className="flex items-center flex-shrink-0 ml-4">
-                <Calendar className={clsx("w-4 h-4 mr-1", getDueDateStyle(task.dueDate, task.status))} />
-                <span className={clsx("text-sm", getDueDateStyle(task.dueDate, task.status))}>
-                  {task.dueDate}
-                </span>
-              </div>
-            </div>
-          ))}
-          {pendingTasks.length === 0 && (
-            <p className="text-center text-muted-500 py-4">Nenhuma tarefa pendente. Bom trabalho!</p>
-          )}
-        </div>
-      </Card>
-
-      {/* 2. Tarefas Concluídas */}
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4 text-muted-900 flex items-center">
-          <XCircle className="w-5 h-5 mr-2 text-success-600" />
-          Tarefas Concluídas ({completedTasks.length})
-        </h2>
-        
-        <div className="space-y-2 opacity-70">
-          {completedTasks.slice(0, 5).map((task) => (
-            <div key={task.id} className="flex justify-between items-center p-2 border-b last:border-b-0 text-muted-500">
-              <p className="text-base line-through">{task.title}</p>
-              <span className="text-xs text-success-600">Concluída</span>
-            </div>
-          ))}
-          {completedTasks.length > 5 && (
-             <p className="text-sm text-muted-400 mt-2 text-center">...e mais {completedTasks.length - 5} concluídas.</p>
-          )}
-        </div>
+            ))}
+            {tasks.length === 0 && <p className="text-center text-muted-500">Nenhuma tarefa para hoje.</p>}
+          </div>
+        )}
       </Card>
     </div>
   );
-      }
+    }
