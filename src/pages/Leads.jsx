@@ -1,91 +1,119 @@
-import { mockLeads } from '@/data/mock';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 import Card from '@/components/ui/Card';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Loader2, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 
 const StatusBadge = ({ status }) => {
-  let color = 'bg-muted-200 text-muted-700';
-  if (status === 'New') color = 'bg-primary-100 text-primary-700';
-  if (status === 'Proposal') color = 'bg-warning-100 text-warning-700';
-  if (status === 'FollowUp') color = 'bg-danger-100 text-danger-700';
-  if (status === 'Converted') color = 'bg-success-100 text-success-700';
-
+  const colors = {
+    'New': 'bg-primary-100 text-primary-700',
+    'Proposal': 'bg-warning-100 text-warning-700',
+    'FollowUp': 'bg-danger-100 text-danger-700',
+    'Converted': 'bg-success-100 text-success-700',
+  };
   return (
-    <span className={clsx("px-3 py-1 text-xs font-medium rounded-full", color)}>
+    <span className={clsx("px-3 py-1 text-xs font-medium rounded-full", colors[status] || 'bg-muted-200')}>
       {status}
     </span>
   );
 };
 
 export default function Leads() {
+  const { user } = useAuth();
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // 1. Buscar Leads do Supabase
+  const fetchLeads = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) alert('Erro ao carregar leads: ' + error.message);
+    else setLeads(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
+  // 2. Criar Novo Lead (Simples)
+  const addLead = async () => {
+    const name = prompt('Nome do Lead:');
+    if (!name) return;
+
+    const { error } = await supabase
+      .from('leads')
+      .insert([{ name, user_id: user.id, status: 'New' }]);
+
+    if (error) alert('Erro ao criar: ' + error.message);
+    else fetchLeads(); // Recarrega a lista
+  };
+
+  // 3. Deletar Lead
+  const deleteLead = async (id) => {
+    if (!confirm('Tem certeza?')) return;
+    const { error } = await supabase.from('leads').delete().eq('id', id);
+    if (error) alert('Erro ao deletar');
+    else fetchLeads();
+  };
+
+  const filteredLeads = leads.filter(l => 
+    l.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-muted-900 md:text-3xl">Gestão de Leads</h1>
-      
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="relative w-full sm:w-1/2">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-400" />
-          <input 
-            type="text"
-            placeholder="Buscar por nome ou email..."
-            className="input pl-10"
-          />
-        </div>
-        
-        <button className="btn-primary w-full sm:w-auto">
-          <Plus className="w-5 h-5 mr-2" />
-          Novo Lead
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-bold text-muted-900">Gestão de Leads</h1>
+        <button onClick={addLead} className="btn-primary w-full sm:w-auto">
+          <Plus className="w-5 h-5 mr-2" /> Novo Lead
         </button>
       </div>
+      
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-400" />
+        <input 
+          type="text" 
+          placeholder="Buscar leads..." 
+          className="input pl-10"
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-      <Card className="overflow-x-auto p-0">
-        <table className="min-w-full divide-y divide-muted-200">
-          <thead className="bg-muted-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-500 uppercase tracking-wider">
-                Nome
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-500 uppercase tracking-wider hidden sm:table-cell">
-                Contato
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-500 uppercase tracking-wider hidden lg:table-cell">
-                Origem
-              </th>
-              <th className="px-6 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-muted-200">
-            {mockLeads.map((lead) => (
-              <tr key={lead.id} className="hover:bg-muted-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-muted-900">
-                  {lead.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-500 hidden sm:table-cell">
-                  {lead.email || lead.phone}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <StatusBadge status={lead.status} />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-500 hidden lg:table-cell">
-                  {lead.source}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" className="text-primary-600 hover:text-primary-900">
-                    Ver Detalhes
-                  </a>
-                </td>
+      <Card className="overflow-hidden">
+        {loading ? (
+          <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary-500" /></div>
+        ) : (
+          <table className="min-w-full divide-y divide-muted-200">
+            <thead className="bg-muted-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-500 uppercase">Nome</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-500 uppercase">Status</th>
+                <th className="px-6 py-3"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        
-        {mockLeads.length === 0 && (
-          <p className="p-6 text-center text-muted-500">Nenhum lead encontrado.</p>
+            </thead>
+            <tbody className="bg-white divide-y divide-muted-200">
+              {filteredLeads.map((lead) => (
+                <tr key={lead.id} className="hover:bg-muted-50">
+                  <td className="px-6 py-4 text-sm font-medium text-muted-900">{lead.name}</td>
+                  <td className="px-6 py-4"><StatusBadge status={lead.status} /></td>
+                  <td className="px-6 py-4 text-right">
+                    <button onClick={() => deleteLead(lead.id)} className="text-danger-500 hover:text-danger-700">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Card>
     </div>
   );
-          }
+  }
