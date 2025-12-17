@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definindo a fonte Inter (Ou outra fonte padrão) */
+@layer base {
+  html {
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* ===================================================
+   COMPONENTES CUSTOMIZADOS (BASE DO DESIGN SYSTEM)
+   =================================================== */
+@layer components {
+  /* --- BOTÕES --- */
+  .btn-base {
+    @apply 
+      py-2 px-4 
+      rounded-lg 
+      font-semibold 
+      text-sm 
+      shadow-sm 
+      transition-all 
+      duration-150 
+      focus:outline-none 
+      focus:ring-2 
+      focus:ring-offset-2 
+      disabled:opacity-50 
+      disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply 
+      btn-base 
+      bg-primary-600 
+      text-white 
+      hover:bg-primary-700 
+      focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply 
+      btn-base 
+      bg-white 
+      text-muted-700 
+      border 
+      border-muted-300 
+      hover:bg-muted-50 
+      focus:ring-muted-400;
+  }
+  
+  /* --- INPUTS --- */
+  .input {
+    @apply 
+      w-full 
+      block 
+      border-muted-300 
+      rounded-lg 
+      text-muted-900 
+      shadow-sm 
+      focus:border-primary-500 
+      focus:ring-primary-500 
+      transition-colors;
+  }
+  
+  /* --- CARDS --- */
+  .card {
+    @apply 
+      bg-white 
+      rounded-xl 
+      shadow-lg;
+  }
+}
