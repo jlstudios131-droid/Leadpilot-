@@ -1,69 +1,47 @@
-import { Users, TrendingUp, DollarSign, ListChecks } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/supabase/client';
+import { Users, ListChecks, Star, TrendingUp } from 'lucide-react';
 import Card from '@/components/ui/Card';
 
-const MetricCard = ({ title, value, icon: Icon, colorClass }) => (
-  <Card className="p-5 flex items-center justify-between">
-    <div>
-      <p className="text-sm font-medium text-muted-500">{title}</p>
-      <p className="text-3xl font-bold text-muted-900 mt-1">{value}</p>
-    </div>
-    <div className={`p-3 rounded-full ${colorClass} bg-opacity-10`}>
-      <Icon className={`w-6 h-6 ${colorClass}`} />
-    </div>
-  </Card>
-);
-
 export default function Dashboard() {
+  const [stats, setStats] = useState({ leads: 0, tasks: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { count: leadsCount } = await supabase.from('leads').select('*', { count: 'exact', head: true });
+      const { count: tasksCount } = await supabase.from('tasks').select('*', { count: 'exact', head: true, eq: ['status', 'Pending'] });
+      setStats({ leads: leadsCount || 0, tasks: tasksCount || 0 });
+    };
+    fetchStats();
+  }, []);
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-muted-900 md:text-3xl">Dashboard</h1>
-
-      {/* 1. Cards de Métricas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard 
-          title="Leads Ativos" 
-          value="45" 
-          icon={Users} 
-          colorClass="text-primary-600" 
-        />
-        <MetricCard 
-          title="Fechados Mês" 
-          value="8" 
-          icon={TrendingUp} 
-          colorClass="text-success-600" 
-        />
-        <MetricCard 
-          title="Valor Fechado" 
-          value="R$ 15.2K" 
-          icon={DollarSign} 
-          colorClass="text-warning-500" 
-        />
-        <MetricCard 
-          title="Tarefas Pendentes" 
-          value="12" 
-          icon={ListChecks} 
-          colorClass="text-danger-500" 
-        />
-      </div>
-
-      {/* 2. Seções de Detalhes (Gráficos, Listas) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        <Card className="lg:col-span-2 p-6">
-          <h2 className="text-xl font-semibold mb-4 text-muted-900">Leads Mais Recentes</h2>
-          <p className="text-muted-500">
-            Placeholder para a lista dos últimos 5 leads criados.
-          </p>
-        </Card>
-        
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4 text-muted-900">Tarefas Urgentes</h2>
-          <p className="text-muted-500">
-             Placeholder para tarefas com vencimento hoje ou atrasadas.
-          </p>
-        </Card>
-      </div>
+      <h1 className="text-3xl font-bold text-muted-900">Dashboard</h1>
       
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-6 flex items-center gap-4">
+          <div className="p-3 bg-primary-100 rounded-lg text-primary-600"><Users /></div>
+          <div>
+            <p className="text-sm text-muted-500">Total Leads</p>
+            <p className="text-2xl font-bold">{stats.leads}</p>
+          </div>
+        </Card>
+
+        <Card className="p-6 flex items-center gap-4">
+          <div className="p-3 bg-warning-100 rounded-lg text-warning-600"><ListChecks /></div>
+          <div>
+            <p className="text-sm text-muted-500">Tarefas Pendentes</p>
+            <p className="text-2xl font-bold">{stats.tasks}</p>
+          </div>
+        </Card>
+        
+        {/* Outros cards estáticos por enquanto */}
+        <Card className="p-6 flex items-center gap-4 opacity-50">
+          <div className="p-3 bg-success-100 rounded-lg text-success-600"><TrendingUp /></div>
+          <div><p className="text-sm text-muted-500">Vendas (Mês)</p><p className="text-2xl font-bold">R$ 0</p></div>
+        </Card>
+      </div>
     </div>
   );
-        }
+}
