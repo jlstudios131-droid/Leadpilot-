@@ -1,29 +1,26 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 
 // Layouts
 import AppLayout from './layout/AppLayout';
 import AuthLayout from './layout/AuthLayout';
 
-// Páginas de Autenticação
+// Páginas
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
-
-// Páginas Principais
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import Tasks from './pages/Tasks';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 
-// Hook de autenticação simulado
-const useAuth = () => {
-  return localStorage.getItem('isLoggedIn') === 'true'; 
-};
-
-// Componente para proteger rotas
+// Componente de Proteção
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = useAuth();
-  if (!isAuthenticated) {
+  const { user, loading } = useAuth();
+  
+  if (loading) return null; // Evita redirecionamento errado enquanto carrega
+  
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -32,15 +29,14 @@ const ProtectedRoute = ({ children }) => {
 export default function RoutesConfig() {
   return (
     <Routes>
-      
-      {/* Rotas Públicas (Auth Layout) */}
+      {/* Rotas Públicas */}
       <Route path="/" element={<AuthLayout />}>
         <Route index element={<Navigate to="/login" replace />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
       </Route>
 
-      {/* Rotas Privadas (App Layout) */}
+      {/* Rotas Privadas */}
       <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="leads" element={<Leads />} />
@@ -48,9 +44,7 @@ export default function RoutesConfig() {
         <Route path="settings" element={<Settings />} />
       </Route>
 
-      {/* Rota 404 (Qualquer outra URL) */}
       <Route path="*" element={<NotFound />} />
-      
     </Routes>
   );
-}
+          }
