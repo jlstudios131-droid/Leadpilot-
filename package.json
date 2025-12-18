@@ -1,7 +1,7 @@
 {
   "name": "leadpilot-saas-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,6 +16,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
+    "recharts": "^2.12.0",
     "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
