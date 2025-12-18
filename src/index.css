@@ -2,16 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definindo a fonte Inter (Ou outra fonte padrão) */
 @layer base {
   html {
     font-family: 'Inter', sans-serif;
   }
 }
 
-/* ===================================================
-   COMPONENTES CUSTOMIZADOS (BASE DO DESIGN SYSTEM)
-   =================================================== */
 @layer components {
   /* --- BOTÕES --- */
   .btn-base {
@@ -55,6 +51,9 @@
     @apply 
       w-full 
       block 
+      px-4
+      py-2
+      bg-white
       border-muted-300 
       rounded-lg 
       text-muted-900 
