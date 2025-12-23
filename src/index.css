@@ -3,71 +3,92 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    font-family: 'Inter', sans-serif;
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+
+  * {
+    @apply border-muted-200 dark:border-muted-800;
+  }
+
+  body {
+    @apply bg-muted-50 text-muted-900 dark:bg-muted-950 dark:text-muted-50 min-h-screen transition-colors duration-300;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Premium Thin Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-300 dark:bg-muted-700 rounded-full hover:bg-muted-400 dark:hover:bg-muted-600 transition-colors;
   }
 }
 
 @layer components {
-  /* --- BOTÕES --- */
-  .btn-base {
-    @apply 
-      py-2 px-4 
-      rounded-lg 
-      font-semibold 
-      text-sm 
-      shadow-sm 
-      transition-all 
-      duration-150 
-      focus:outline-none 
-      focus:ring-2 
-      focus:ring-offset-2 
-      disabled:opacity-50 
-      disabled:cursor-not-allowed;
+  /* --- PREMIUM BUTTONS --- */
+  .btn-premium {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 
+    rounded-xl font-semibold text-sm transition-all duration-200
+    active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-primary {
-    @apply 
-      btn-base 
-      bg-primary-600 
-      text-white 
-      hover:bg-primary-700 
-      focus:ring-primary-500;
+    @apply btn-premium bg-primary-600 text-white shadow-lg shadow-primary-500/20 
+    hover:bg-primary-700 hover:shadow-primary-600/30;
+  }
+
+  .btn-ai {
+    @apply btn-premium bg-ai-600 text-white shadow-lg shadow-ai-500/20 
+    hover:bg-ai-700 hover:shadow-ai-600/40 border border-ai-400/20;
   }
 
   .btn-secondary {
-    @apply 
-      btn-base 
-      bg-white 
-      text-muted-700 
-      border 
-      border-muted-300 
-      hover:bg-muted-50 
-      focus:ring-muted-400;
+    @apply btn-premium bg-white dark:bg-muted-800 text-muted-700 dark:text-muted-200 
+    border border-muted-200 dark:border-muted-700 hover:bg-muted-50 dark:hover:bg-muted-700;
   }
-  
-  /* --- INPUTS --- */
-  .input {
-    @apply 
-      w-full 
-      block 
-      px-4
-      py-2
-      bg-white
-      border-muted-300 
-      rounded-lg 
-      text-muted-900 
-      shadow-sm 
-      focus:border-primary-500 
-      focus:ring-primary-500 
-      transition-colors;
+
+  /* --- GLASS CARDS & UI --- */
+  .premium-card {
+    @apply bg-white dark:bg-muted-800/50 border border-muted-200 dark:border-muted-700/50 
+    rounded-2xl shadow-sm backdrop-blur-md transition-all duration-300;
   }
-  
-  /* --- CARDS --- */
-  .card {
-    @apply 
-      bg-white 
-      rounded-xl 
-      shadow-lg;
+
+  .ai-card-active {
+    @apply border-ai-500/50 shadow-glow bg-gradient-to-br from-white to-ai-50/30 
+    dark:from-muted-800 dark:to-ai-900/10;
+  }
+
+  /* --- PREMIUM INPUTS --- */
+  .input-premium {
+    @apply w-full px-4 py-2.5 bg-white dark:bg-muted-900 border border-muted-200 
+    dark:border-muted-700 rounded-xl text-muted-900 dark:text-muted-100 
+    focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 
+    transition-all outline-none placeholder:text-muted-400;
+  }
+
+  /* --- STATUS BADGES --- */
+  .badge {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider;
   }
 }
+
+@layer utilities {
+  .text-gradient-ai {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-ai-500 to-primary-500;
+  }
+  
+  .glass-morph {
+    @apply bg-white/70 dark:bg-muted-900/70 backdrop-blur-lg border-b border-white/20 dark:border-muted-800/50;
+  }
+    }
