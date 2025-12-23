@@ -1,66 +1,73 @@
-/**
- * LeadPilot AI Service (Free Engine)
- * Usa heurística avançada para simular IA sem custos de API.
- */
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+// Inicializa a conexão com o Google Gemini usando a chave de ambiente
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+
 export const aiService = {
-  // Sincrono: Calcula instantaneamente para listas grandes
+  /**
+   * 1. LEAD SCORE (Matemático & Instantâneo)
+   * Analisa a qualidade dos dados para priorizar o funil.
+   */
   calculateLeadScore(lead) {
     if (!lead) return 0;
+    let score = 10;
 
-    let score = 10; // Pontuação base de existência
-
-    // 1. Dados de Contato (Dados valem ouro)
     if (lead.email) score += 15;
     if (lead.phone) score += 20;
+    if (lead.notes && lead.notes.length > 50) score += 15;
 
-    // 2. Engajamento (Tamanho das notas indica interação)
-    if (lead.notes && lead.notes.length > 20) score += 10;
-    if (lead.notes && lead.notes.length > 100) score += 10;
-
-    // 3. Estágio do Funil (Pipeline Weight)
     const statusWeights = {
       'New': 5,
       'FollowUp': 20,
       'Proposal': 45,
-      'Converted': 50, // Leads convertidos não são 100% até pagarem (exemplo)
+      'Converted': 50,
       'Lost': 0
     };
 
     score += statusWeights[lead.status] || 0;
-    
-    // Teto máximo de 100 e mínimo de 0
     return Math.min(Math.max(score, 0), 100);
   },
 
-  // Assincrono: Simula "pensamento" para dar conselhos
+  /**
+   * 2. SMART RECOMMENDATION (IA Real via Gemini 1.5 Flash)
+   * Analisa o contexto das notas e do status para dar uma estratégia real.
+   */
   async getSmartRecommendation(lead) {
-    // Simula delay de rede/processamento (1.2s) para UX Premium
-    await new Promise(resolve => setTimeout(resolve, 1200));
-
-    // Lógica de Recomendação "Mock AI"
-    if (lead.status === 'Lost') {
-      return "Analyze rejection reason. Send a 'break-up' email to keep door open for future.";
-    }
-
-    if (!lead.email && !lead.phone) {
-      return "Critical Missing Data: Use LinkedIn or company website to find contact info immediately.";
-    }
-
-    if (lead.status === 'New') {
-      return "High Priority: Send the 'Introduction Template' within the first 2 hours.";
-    }
-
-    if (lead.status === 'FollowUp') {
-      if (lead.notes?.length > 50) {
-        return "Deep engagement detected. Suggest a demo call to clarify specific points found in notes.";
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      
+      if (!apiKey || apiKey === "tua_chave_aqui") {
+        console.warn("AI Key not configured properly.");
+        return "AI system pending setup. Please check environment variables.";
       }
-      return "Low engagement. Send a value-add article or case study instead of asking for a meeting.";
-    }
 
-    if (lead.status === 'Proposal') {
-      return "Closing Window: Send a gentle reminder 48h after proposal sent. Focus on ROI.";
-    }
+      // Usamos o modelo 'flash' por ser o mais rápido e otimizado para o plano gratuito
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    return "Maintain periodic contact to nurture this relationship.";
+      const prompt = `
+        You are a world-class sales strategist for a B2B SaaS company.
+        Analyze this lead and provide ONE specific, high-impact tactical advice.
+        
+        Lead Name: ${lead.name}
+        Current Pipeline Stage: ${lead.status}
+        Notes/History: "${lead.notes || 'No notes provided yet'}"
+        Contact available: ${lead.email || lead.phone ? 'Yes' : 'No'}
+
+        Task: Provide a single sentence (max 20 words) with the next best action to close this deal. 
+        Be professional, aggressive (but polite), and highly strategic. 
+        Respond only in English.
+      `;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      return text.trim() || "Deep dive into lead history to identify pain points.";
+
+    } catch (error) {
+      console.error("Gemini API Error:", error);
+      // Fallback inteligente caso a API falhe ou a cota de 15/min expire
+      return "Critical follow-up required. Review the latest interaction for immediate response.";
+    }
   }
 };
