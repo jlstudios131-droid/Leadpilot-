@@ -1,58 +1,103 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class', // Vital for manual toggle between Light/Dark modes
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'], // Professional, clean font stack
+      },
       colors: {
-        // Paleta Principal do LeadPilot
+        // Brand Identity (Refined Blue for Trust & Tech)
         primary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
           200: '#bae6fd',
           300: '#7dd3fc',
           400: '#38bdf8',
-          500: '#0ea5e9',
+          500: '#0ea5e9', // Brand Base
           600: '#0284c7',
           700: '#0369a1',
           800: '#075985',
           900: '#0c4a6e',
+          950: '#082f49',
         },
-        // Tons Muted (Slate/Gray) para UI profissional
+        // AI / Magic Palette (For "Smart" features & Automation)
+        // Used for AI badges, insights, and automated actions
+        ai: {
+          50: '#f5f3ff',
+          100: '#ede9fe',
+          200: '#ddd6fe',
+          300: '#c4b5fd',
+          400: '#a78bfa',
+          500: '#8b5cf6', // AI Primary (Violet)
+          600: '#7c3aed',
+          700: '#6d28d9',
+          800: '#5b21b6',
+          900: '#4c1d95',
+        },
+        // Muted / Neutrals (Optimized for Dark Mode depth)
         muted: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          300: '#d1d5db',
-          400: '#9ca3af', // ADICIONADO: Necessário para o focus:ring-muted-400 no index.css
-          500: '#6b7280',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b', // Card Background (Dark Mode)
+          900: '#0f172a', // Main Background (Dark Mode)
+          950: '#020617', // Deep/Sidebar Background
         },
-        // Cores de Status para Gráficos e Badges
+        // Status Colors (Vibrant for Dashboard Alerts)
         success: { 
           50: '#f0fdf4',
           500: '#22c55e', 
-          600: '#16a34a' 
+          600: '#16a34a',
+          700: '#15803d' 
         },
         warning: { 
           50: '#fffbeb',
           500: '#f59e0b', 
+          600: '#d97706',
           700: '#b45309' 
         },
         danger: { 
           50: '#fef2f2',
           500: '#ef4444', 
-          600: '#dc2626' 
+          600: '#dc2626',
+          700: '#b91c1c' 
         },
       },
+      // Smooth Premium Animations (Native Tailwind)
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'slide-up': 'slideUp 0.4s ease-out',
+        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite', // For AI Processing state
+        'spin-slow': 'spin 3s linear infinite', // For heavy background loading
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+      boxShadow: {
+        'glow': '0 0 20px -5px rgba(139, 92, 246, 0.3)', // AI Glow Effect
+      }
     },
   },
   plugins: [
-    require('@tailwindcss/forms'),
+    require('@tailwindcss/forms')({
+      strategy: 'class', // Better for custom inputs
+    }),
   ],
           }
