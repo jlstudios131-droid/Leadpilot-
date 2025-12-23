@@ -1,52 +1,64 @@
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import MobileNav from '@/components/MobileNav';
-import { useState } from 'react'; 
+import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
+import MobileNav from '../components/MobileNav';
+import Fab from '../components/Fab';
+import { motion } from 'framer-motion';
 
+/**
+ * LeadPilot AppLayout
+ * The main container for the private dashboard.
+ */
 export default function AppLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
+  // Function to handle the FAB action (usually opens a Quick Lead modal)
+  const handleQuickAction = () => {
+    // This will be connected to a global modal state later
+    console.log("Quick Action Triggered");
+  };
+
   return (
-    <div className="flex h-screen bg-muted-50 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-muted-50 dark:bg-muted-950">
       
-      {/* 1. Sidebar 
-        No PC (lg:), ela agora aparecerá fixa à esquerda ocupando espaço.
-        No Mobile, ela fica escondida e desliza sobre o conteúdo.
-      */}
+      {/* 1. Sidebar (Desktop) / Mobile Drawer is inside Sidebar component */}
       <Sidebar 
         isMobileMenuOpen={isMobileMenuOpen} 
         setIsMobileMenuOpen={setIsMobileMenuOpen} 
       />
-      
-      {/* 2. Área de Conteúdo Principal */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+      {/* 2. Main Content Area */}
+      <div className="flex flex-col flex-1 w-full overflow-hidden">
         
-        {/* Header (Barra de topo com nome da página, busca e perfil) */}
-        <Header 
-          setIsMobileMenuOpen={setIsMobileMenuOpen} 
-        />
-        
-        {/* Main Content 
-          - overflow-y-auto: Permite scroll apenas nesta área.
-          - max-w-7xl: Garante que o conteúdo não fique "esticado" demais em telas ultra-wide.
-        */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8 bg-muted-50/50">
-          <div className="max-w-7xl mx-auto w-full animate-in fade-in duration-500">
-            <Outlet /> 
+        {/* Top Navigation */}
+        <Header setIsMobileMenuOpen={setIsMobileMenuOpen} />
+
+        {/* Scrollable Dashboard Area */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* motion.div handles the page transition animations. 
+              The 'Outlet' renders the actual pages (Dashboard, Leads, etc.)
+            */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
+              <Outlet />
+            </motion.div>
           </div>
         </main>
       </div>
 
-      {/* 3. MobileNav 
-        Menu de navegação inferior opcional para dispositivos móveis.
-      */}
-      {/* Se o teu MobileNav for uma barra inferior, ele aparecerá aqui apenas em telas pequenas */}
+      {/* 3. Mobile Navigation Menu (Overlay) */}
       <MobileNav 
         isMobileMenuOpen={isMobileMenuOpen} 
         setIsMobileMenuOpen={setIsMobileMenuOpen} 
       />
-      
+
+      {/* 4. Floating Action Button (Mobile Only) */}
+      <Fab onClick={handleQuickAction} label="Add New Lead" />
     </div>
   );
-      }
+}
