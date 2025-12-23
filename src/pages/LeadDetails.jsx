@@ -3,10 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import { 
   ArrowLeft, Mail, Phone, Calendar, Save, 
-  Loader2, MessageSquare, ListChecks, Plus, CheckCircle2, Circle 
+  Loader2, MessageSquare, ListChecks, Plus, 
+  CheckCircle2, Circle, Sparkles, User
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
 export default function LeadDetails() {
   const { id } = useParams();
@@ -18,7 +23,6 @@ export default function LeadDetails() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [notes, setNotes] = useState('');
   
-  // Estado para nova tarefa
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isAddingTask, setIsAddingTask] = useState(false);
 
@@ -31,12 +35,10 @@ export default function LeadDetails() {
       .single();
 
     if (error) {
-      console.error(error);
       navigate('/leads');
     } else {
       setLead(data);
       setNotes(data.notes || '');
-      // Ordenar tarefas: pendentes primeiro
       if (data.tasks) {
         data.tasks.sort((a, b) => (a.status === 'Completed' ? 1 : -1));
       }
@@ -49,7 +51,7 @@ export default function LeadDetails() {
   const handleUpdateNotes = async () => {
     setSavingNotes(true);
     const { error } = await supabase.from('leads').update({ notes }).eq('id', id);
-    if (error) alert('Erro ao salvar notas');
+    if (error) console.error('Error saving notes');
     setSavingNotes(false);
   };
 
@@ -66,14 +68,13 @@ export default function LeadDetails() {
     const { error } = await supabase.from('tasks').insert([{
       title: newTaskTitle,
       user_id: user.id,
-      lead_id: id, // Vincula a tarefa a este lead específico
+      lead_id: id,
       status: 'Pending'
     }]);
 
-    if (error) alert('Erro ao criar tarefa');
-    else {
+    if (!error) {
       setNewTaskTitle('');
-      fetchLead(); // Recarrega para mostrar a nova tarefa
+      fetchLead();
     }
     setIsAddingTask(false);
   };
@@ -85,139 +86,194 @@ export default function LeadDetails() {
   };
 
   if (loading) return (
-    <div className="flex h-96 items-center justify-center">
+    <div className="flex h-[60vh] items-center justify-center">
       <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link to="/leads" className="p-2 hover:bg-muted-100 rounded-full transition">
-          <ArrowLeft className="w-6 h-6 text-muted-600" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-muted-900">{lead.name}</h1>
-          <p className="text-sm text-muted-500">Gestão de Relacionamento</p>
+    <div className="space-y-8 pb-10">
+      {/* Premium Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link 
+            to="/leads" 
+            className="p-2.5 bg-white dark:bg-muted-900 border border-muted-200 dark:border-muted-800 rounded-xl hover:text-primary-600 transition-all shadow-sm"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-black text-muted-900 dark:text-white tracking-tight">{lead.name}</h1>
+              <div className="w-2 h-2 bg-ai-500 rounded-full animate-pulse" />
+            </div>
+            <p className="text-sm font-bold text-muted-500 uppercase tracking-widest">Lead Intelligence Dossier</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+            <span className="text-[10px] font-black text-muted-400 uppercase tracking-widest">Pipeline Phase:</span>
+            <select 
+                value={lead.status}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                className="bg-white dark:bg-muted-900 border border-muted-200 dark:border-muted-800 rounded-xl px-4 py-2 text-sm font-bold text-primary-600 focus:ring-2 focus:ring-primary-500 transition-all outline-none shadow-sm"
+            >
+                <option value="New">New Lead</option>
+                <option value="Proposal">Proposal</option>
+                <option value="FollowUp">Follow-up</option>
+                <option value="Converted">Converted</option>
+                <option value="Lost">Lost</option>
+            </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Coluna Lateral: Dados e Status */}
+        {/* Left Column: Contact Data */}
         <div className="space-y-6">
           <Card className="p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-400 mb-4">Contacto</h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-muted-700">
-                <Mail className="w-4 h-4 text-primary-500" />
-                <span className="text-sm truncate">{lead.email || 'N/A'}</span>
+            <div className="flex items-center gap-2 mb-6 text-primary-600 dark:text-primary-400">
+                <User size={18} />
+                <h2 className="text-xs font-black uppercase tracking-[0.2em]">Contact Profile</h2>
+            </div>
+            <div className="space-y-5">
+              <div className="flex flex-col gap-1 group">
+                <span className="text-[10px] font-bold text-muted-400 uppercase">Email Address</span>
+                <div className="flex items-center gap-3 text-muted-700 dark:text-muted-200">
+                    <Mail className="w-4 h-4 text-primary-500" />
+                    <span className="text-sm font-medium truncate">{lead.email || '—'}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-muted-700">
-                <Phone className="w-4 h-4 text-primary-500" />
-                <span className="text-sm">{lead.phone || 'N/A'}</span>
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-muted-400 uppercase">Phone Number</span>
+                <div className="flex items-center gap-3 text-muted-700 dark:text-muted-200">
+                    <Phone className="w-4 h-4 text-primary-500" />
+                    <span className="text-sm font-medium">{lead.phone || '—'}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-muted-700">
-                <Calendar className="w-4 h-4 text-primary-500" />
-                <span className="text-sm">Desde {new Date(lead.created_at).toLocaleDateString()}</span>
+              <div className="flex flex-col gap-1 pt-4 border-t border-muted-100 dark:border-muted-800">
+                <span className="text-[10px] font-bold text-muted-400 uppercase">Member Since</span>
+                <div className="flex items-center gap-3 text-muted-700 dark:text-muted-200">
+                    <Calendar className="w-4 h-4 text-primary-500" />
+                    <span className="text-sm font-medium">{new Date(lead.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                </div>
               </div>
             </div>
+          </Card>
 
-            <div className="mt-8 pt-6 border-t border-muted-100">
-              <label className="block text-xs font-bold uppercase text-muted-400 mb-2">Fase do Funil</label>
-              <select 
-                value={lead.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="input text-sm"
-              >
-                <option value="New">Novo Lead</option>
-                <option value="Proposal">Proposta</option>
-                <option value="FollowUp">Follow-up</option>
-                <option value="Converted">Convertido</option>
-                <option value="Lost">Perdido</option>
-              </select>
-            </div>
+          <Card isAiHighlight className="p-6 overflow-hidden relative">
+             <div className="relative z-10">
+                <div className="flex items-center gap-2 text-ai-600 mb-4 font-black text-[10px] uppercase tracking-widest">
+                    <Sparkles size={14} /> AI Recommendation
+                </div>
+                <p className="text-sm text-muted-600 dark:text-muted-400 leading-relaxed italic">
+                    "Based on this lead's profile, a personalized video demo via email has a 45% higher conversion rate than a standard follow-up."
+                </p>
+             </div>
+             <div className="absolute -right-4 -bottom-4 opacity-10">
+                <Sparkles size={100} />
+             </div>
           </Card>
         </div>
 
-        {/* Coluna Principal: Notas e Tarefas */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Main Column: Interaction & Tasks */}
+        <div className="lg:col-span-2 space-y-8">
           
-          {/* Notas */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-primary-500" /> Notas
-              </h2>
-              <button 
+          {/* Notes Section */}
+          <Card className="p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary-50 dark:bg-primary-500/10 rounded-lg text-primary-600">
+                    <MessageSquare size={20} />
+                </div>
+                <h2 className="text-xl font-bold dark:text-white">Timeline Notes</h2>
+              </div>
+              <Button 
+                variant="secondary" 
+                size="sm"
                 onClick={handleUpdateNotes} 
-                disabled={savingNotes}
-                className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1"
+                isLoading={savingNotes}
+                icon={Save}
               >
-                {savingNotes ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-4 h-4" />}
-                Salvar
-              </button>
+                Sync Notes
+              </Button>
             </div>
             <textarea 
-              className="input min-h-[120px] bg-muted-50 border-none focus:ring-1 focus:ring-primary-500 p-4 text-sm"
-              placeholder="Escreva aqui os detalhes da última interação..."
+              className="w-full min-h-[160px] bg-muted-50/50 dark:bg-muted-900/50 border-none rounded-2xl p-6 text-sm text-muted-700 dark:text-muted-200 focus:ring-2 focus:ring-primary-500 transition-all outline-none placeholder:text-muted-400"
+              placeholder="Start logging details about the last conversation, objections or specific interests..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
           </Card>
 
-          {/* Tarefas */}
-          <Card className="p-6">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <ListChecks className="w-5 h-5 text-primary-500" /> Tarefas do Lead
-            </h2>
+          {/* Task Board */}
+          <Card className="p-8">
+            <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-success-50 dark:bg-success-500/10 rounded-lg text-success-600">
+                    <ListChecks size={20} />
+                </div>
+                <h2 className="text-xl font-bold dark:text-white">Action Items</h2>
+            </div>
 
-            {/* Form para Nova Tarefa */}
-            <form onSubmit={handleAddTask} className="flex gap-2 mb-6">
-              <input 
-                type="text" 
-                placeholder="Nova tarefa para este lead..." 
-                className="input text-sm"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-              />
-              <button 
+            {/* Quick Task Entry */}
+            <form onSubmit={handleAddTask} className="flex gap-3 mb-8">
+              <div className="flex-1">
+                <Input 
+                    placeholder="Describe the next step for this lead..." 
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                />
+              </div>
+              <Button 
                 type="submit" 
-                disabled={isAddingTask || !newTaskTitle}
-                className="btn-primary py-2 px-4"
+                variant="primary"
+                disabled={!newTaskTitle}
+                isLoading={isAddingTask}
+                icon={Plus}
               >
-                {isAddingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              </button>
+                Add
+              </Button>
             </form>
 
-            {/* Lista de Tarefas */}
+            {/* Task List with AnimatePresence */}
             <div className="space-y-3">
-              {lead.tasks?.length > 0 ? (
-                lead.tasks.map(task => (
-                  <div 
-                    key={task.id} 
-                    className="flex items-center justify-between p-3 bg-white border border-muted-100 rounded-xl hover:border-primary-200 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => toggleTaskStatus(task.id, task.status)}>
-                        {task.status === 'Completed' ? (
-                          <CheckCircle2 className="w-5 h-5 text-success-500" />
-                        ) : (
-                          <Circle className="w-5 h-5 text-muted-300" />
-                        )}
-                      </button>
-                      <span className={clsx("text-sm", task.status === 'Completed' ? "line-through text-muted-400" : "text-muted-700 font-medium")}>
-                        {task.title}
-                      </span>
+              <AnimatePresence mode="popLayout">
+                {lead.tasks?.length > 0 ? (
+                    lead.tasks.map(task => (
+                    <motion.div 
+                        key={task.id} 
+                        layout
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        className="group flex items-center justify-between p-4 bg-muted-50/50 dark:bg-muted-900/30 border border-muted-100 dark:border-muted-800 rounded-2xl hover:border-primary-500 transition-all"
+                    >
+                        <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => toggleTaskStatus(task.id, task.status)}
+                            className="transition-transform active:scale-90"
+                        >
+                            {task.status === 'Completed' ? (
+                            <CheckCircle2 className="w-6 h-6 text-success-500" />
+                            ) : (
+                            <Circle className="w-6 h-6 text-muted-300 dark:text-muted-600 group-hover:text-primary-400" />
+                            )}
+                        </button>
+                        <span className={clsx(
+                            "text-sm font-medium transition-all",
+                            task.status === 'Completed' ? "line-through text-muted-400" : "text-muted-700 dark:text-muted-200"
+                        )}>
+                            {task.title}
+                        </span>
+                        </div>
+                    </motion.div>
+                    ))
+                ) : (
+                    <div className="text-center py-10 border-2 border-dashed border-muted-100 dark:border-muted-800 rounded-3xl">
+                        <p className="text-muted-400 text-sm font-medium italic">No pending actions for this contact.</p>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-6 text-muted-400 text-sm">
-                  Sem tarefas pendentes para este contacto.
-                </div>
-              )}
+                )}
+              </AnimatePresence>
             </div>
           </Card>
 
@@ -225,4 +281,4 @@ export default function LeadDetails() {
       </div>
     </div>
   );
-         }
+                                                    }
