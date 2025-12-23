@@ -1,39 +1,66 @@
-import { supabase } from '@/supabase/client';
-
 /**
- * LeadPilot AI Service
- * Responsável por gerar insights e automações baseadas em dados.
+ * LeadPilot AI Service (Free Engine)
+ * Usa heurística avançada para simular IA sem custos de API.
  */
 export const aiService = {
-  // Analisa o comportamento e notas do lead para dar uma pontuação (0-100)
-  async calculateLeadScore(leadId) {
-    const { data: lead } = await supabase
-      .from('leads')
-      .select('*, tasks(*)')
-      .eq('id', leadId)
-      .single();
-
+  // Sincrono: Calcula instantaneamente para listas grandes
+  calculateLeadScore(lead) {
     if (!lead) return 0;
 
-    // Lógica de IA (Mockup de lógica avançada)
-    let score = 20; // Base
-    if (lead.email && lead.phone) score += 20;
-    if (lead.status === 'Proposal') score += 30;
-    if (lead.tasks?.length > 0) score += 15;
+    let score = 10; // Pontuação base de existência
+
+    // 1. Dados de Contato (Dados valem ouro)
+    if (lead.email) score += 15;
+    if (lead.phone) score += 20;
+
+    // 2. Engajamento (Tamanho das notas indica interação)
+    if (lead.notes && lead.notes.length > 20) score += 10;
+    if (lead.notes && lead.notes.length > 100) score += 10;
+
+    // 3. Estágio do Funil (Pipeline Weight)
+    const statusWeights = {
+      'New': 5,
+      'FollowUp': 20,
+      'Proposal': 45,
+      'Converted': 50, // Leads convertidos não são 100% até pagarem (exemplo)
+      'Lost': 0
+    };
+
+    score += statusWeights[lead.status] || 0;
     
-    return Math.min(score, 100);
+    // Teto máximo de 100 e mínimo de 0
+    return Math.min(Math.max(score, 0), 100);
   },
 
-  // Sugere a próxima melhor ação baseada no histórico
+  // Assincrono: Simula "pensamento" para dar conselhos
   async getSmartRecommendation(lead) {
-    // Aqui seria a chamada à API de IA (GPT-4)
-    // Por agora, usamos um motor de regras inteligente
+    // Simula delay de rede/processamento (1.2s) para UX Premium
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    // Lógica de Recomendação "Mock AI"
+    if (lead.status === 'Lost') {
+      return "Analyze rejection reason. Send a 'break-up' email to keep door open for future.";
+    }
+
+    if (!lead.email && !lead.phone) {
+      return "Critical Missing Data: Use LinkedIn or company website to find contact info immediately.";
+    }
+
     if (lead.status === 'New') {
-      return "Initial discovery call needed. Research their LinkedIn profile first.";
+      return "High Priority: Send the 'Introduction Template' within the first 2 hours.";
     }
-    if (lead.status === 'FollowUp' && lead.notes?.length < 50) {
-      return "Follow-up value is low. Send a case study to increase trust.";
+
+    if (lead.status === 'FollowUp') {
+      if (lead.notes?.length > 50) {
+        return "Deep engagement detected. Suggest a demo call to clarify specific points found in notes.";
+      }
+      return "Low engagement. Send a value-add article or case study instead of asking for a meeting.";
     }
-    return "Keep monitoring engagement. Lead is warming up.";
+
+    if (lead.status === 'Proposal') {
+      return "Closing Window: Send a gentle reminder 48h after proposal sent. Focus on ROI.";
+    }
+
+    return "Maintain periodic contact to nurture this relationship.";
   }
 };
