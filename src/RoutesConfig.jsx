@@ -1,57 +1,82 @@
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { motion } from 'framer-motion';
 
 // Layouts
 import AppLayout from './layout/AppLayout';
 import AuthLayout from './layout/AuthLayout';
 
-// Páginas
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import Dashboard from './pages/Dashboard';
-import Leads from './pages/Leads';
-import LeadDetails from './pages/LeadDetails'; // Nova página
-import Tasks from './pages/Tasks';
-import Settings from './pages/Settings';
-import NotFound from './pages/NotFound';
+// Pages (Using Lazy Loading for "5-minute CRM" performance)
+const Login = lazy(() => import('./pages/Auth/Login'));
+const Register = lazy(() => import('./pages/Auth/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Leads = lazy(() => import('./pages/Leads'));
+const LeadDetails = lazy(() => import('./pages/LeadDetails'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Settings = lazy(() => import('./pages/Settings'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Componente de Proteção de Rota
+// NEW: Public Capture Page (Where leads register themselves)
+const PublicCapture = lazy(() => import('./pages/Public/Capture'));
+
+/**
+ * Premium Loading State
+ * Features a clean, AI-themed spinner
+ */
+const LoadingScreen = () => (
+  <div className="h-screen w-screen flex flex-col items-center justify-center bg-muted-50 dark:bg-muted-950">
+    <motion.div 
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      className="h-12 w-12 border-4 border-ai-500/20 border-t-ai-600 rounded-full"
+    />
+    <p className="mt-4 text-muted-500 dark:text-muted-400 font-medium animate-pulse">
+      Syncing Intelligence...
+    </p>
+  </div>
+);
+
+/**
+ * Route Guard for Private Access
+ */
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
-  if (loading) return (
-    <div className="h-screen w-screen flex items-center justify-center bg-muted-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-    </div>
-  );
+  if (loading) return <LoadingScreen />;
   
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
+  
   return children;
 };
 
 export default function RoutesConfig() {
   return (
-    <Routes>
-      {/* Rotas de Autenticação (Públicas) */}
-      <Route path="/" element={<AuthLayout />}>
-        <Route index element={<Navigate to="/login" replace />} />
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
-      </Route>
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        {/* PUBLIC LEAD CAPTURE (The "Register Alone" Model) */}
+        {/* This is the landing page/form where the lead enters the system automatically */}
+        <Route path="/c/:formId" element={<PublicCapture />} />
 
-      {/* Rotas do Aplicativo (Privadas) */}
-      <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="leads" element={<Leads />} />
-        <Route path="leads/:id" element={<LeadDetails />} />
-        <Route path="tasks" element={<Tasks />} />
-        <Route path="settings" element={<Settings />} />
-      </Route>
+        {/* AUTH ROUTES (Public) */}
+        <Route path="/" element={<AuthLayout />}>
+          <Route index element={<Navigate to="/login" replace />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+        </Route>
 
-      {/* Rota 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* APP ROUTES (Private - Lifetime Access) */}
+        <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="leads" element={<Leads />} />
+          <Route path="leads/:id" element={<LeadDetails />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+
+        {/* 404 ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
-             }
+                   }
