@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
-// Layouts
-import MainLayout from '@/layouts/MainLayout';
+// Layouts corrigidos conforme a pasta real do projeto
+import AppLayout from '@/layout/AppLayout';
 
 // Páginas
 import Dashboard from '@/pages/Dashboard';
@@ -21,7 +21,7 @@ import NotFound from '@/pages/NotFound';
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
-  if (loading) return null; // O ecrã de Splash no AuthContext já trata o visual
+  if (loading) return null; 
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
@@ -32,12 +32,12 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* --- ROTAS PRIVADAS (Envolvidas pelo MainLayout) --- */}
+      {/* --- ROTAS PRIVADAS (Envolvidas pelo AppLayout corrigido) --- */}
       <Route
         path="/"
         element={
           <PrivateRoute>
-            <MainLayout />
+            <AppLayout />
           </PrivateRoute>
         }
       >
@@ -55,4 +55,4 @@ export default function App() {
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
-}
+            }
