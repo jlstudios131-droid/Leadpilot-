@@ -25,26 +25,55 @@ export const useLeads = () => {
     }
   }, [notify]);
 
-  // Criar novo Lead com feedback Premium
-  const createLead = async (leadData) => {
+  /**
+   * Criar novo Lead (Manual ou Automático)
+   * @param {Object} leadData - Dados do lead
+   * @param {boolean} isSilent - Se true, não mostra notificação (usado para captura externa)
+   */
+  const createLead = async (leadData, isSilent = false) => {
     setLoading(true);
     try {
+      // Garante que o lead tem uma origem definida
+      const finalLeadData = {
+        ...leadData,
+        source: leadData.source || 'Manual',
+        status: leadData.status || 'New'
+      };
+
       const { data, error } = await supabase
         .from('leads')
-        .insert([leadData])
+        .insert([finalLeadData])
         .select()
         .single();
 
       if (error) throw error;
-      notify.success(`Lead ${leadData.name} captured successfully!`);
+
+      if (!isSilent) {
+        notify.success(`Lead ${leadData.name} captured successfully!`);
+      }
+      
       return data;
     } catch (error) {
-      notify.error(error.message);
+      if (!isSilent) notify.error(error.message);
+      console.error("Capture error:", error.message);
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  return { loading, fetchLeads, createLead };
+  // Função para deletar (necessária para gestão)
+  const deleteLead = async (id) => {
+    try {
+      const { error } = await supabase.from('leads').delete().eq('id', id);
+      if (error) throw error;
+      notify.success("Lead removed from pipeline.");
+      return true;
+    } catch (error) {
+      notify.error("Failed to delete lead.");
+      return false;
+    }
+  };
+
+  return { loading, fetchLeads, createLead, deleteLead };
 };
