@@ -1,18 +1,44 @@
 <!doctype html>
-<html lang="pt-br">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <title>LeadPilot | AI-Driven Sales CRM</title>
+    <meta name="description" content="The intelligent CRM that prioritizes your leads automatically. Close more deals with AI-driven insights and automated workflows." />
+    <meta name="theme-color" content="#0f172a" />
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="LeadPilot | AI-Driven Sales CRM" />
+    <meta property="og:description" content="Stop managing data. Start closing deals. The 5-minute CRM powered by AI." />
+    <meta property="og:image" content="/og-image.png" />
+
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <title>LeadPilot | CRM SaaS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+      (function() {
+        try {
+          const localTheme = localStorage.getItem('theme');
+          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          
+          if (localTheme === 'dark' || (!localTheme && systemTheme)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          console.error('Error applying theme:', e);
+        }
+      })();
+    </script>
   </head>
-  <body>
+  
+  <body class="bg-muted-50 text-muted-900 dark:bg-muted-900 dark:text-muted-50 antialiased overflow-x-hidden selection:bg-primary-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
-  </html>
+    </html>
