@@ -32,7 +32,8 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['lucide-react', 'framer-motion', 'sonner'],
           'vendor-charts': ['recharts'],
-          'vendor-ai': ['openai', 'axios'],
+          // CORREÇÃO: Removido 'openai' e adicionado o Google AI SDK
+          'vendor-ai': ['@google/generative-ai'],
         },
       },
     },
