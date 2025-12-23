@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import AppLayout from './layout/AppLayout';
 import AuthLayout from './layout/AuthLayout';
 
-// Pages (Using Lazy Loading for "5-minute CRM" performance)
+// Pages
 const Login = lazy(() => import('./pages/Auth/Login'));
 const Register = lazy(() => import('./pages/Auth/Register'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -17,13 +17,9 @@ const Tasks = lazy(() => import('./pages/Tasks'));
 const Settings = lazy(() => import('./pages/Settings'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// NEW: Public Capture Page (Where leads register themselves)
+// NEW: Public Capture Page (Landing Page de Alta Conversão)
 const PublicCapture = lazy(() => import('./pages/Public/Capture'));
 
-/**
- * Premium Loading State
- * Features a clean, AI-themed spinner
- */
 const LoadingScreen = () => (
   <div className="h-screen w-screen flex flex-col items-center justify-center bg-muted-50 dark:bg-muted-950">
     <motion.div 
@@ -31,22 +27,16 @@ const LoadingScreen = () => (
       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
       className="h-12 w-12 border-4 border-ai-500/20 border-t-ai-600 rounded-full"
     />
-    <p className="mt-4 text-muted-500 dark:text-muted-400 font-medium animate-pulse">
-      Syncing Intelligence...
+    <p className="mt-4 text-xs font-black text-muted-400 uppercase tracking-widest animate-pulse">
+      Neural Syncing...
     </p>
   </div>
 );
 
-/**
- * Route Guard for Private Access
- */
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
   if (loading) return <LoadingScreen />;
-  
   if (!user) return <Navigate to="/login" replace />;
-  
   return children;
 };
 
@@ -54,18 +44,18 @@ export default function RoutesConfig() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
-        {/* PUBLIC LEAD CAPTURE (The "Register Alone" Model) */}
-        {/* This is the landing page/form where the lead enters the system automatically */}
-        <Route path="/c/:formId" element={<PublicCapture />} />
+        {/* ROTA PÚBLICA DE CAPTURA - SEM LOGIN */}
+        {/* O :userId permite que cada cliente seu tenha o seu próprio link de anúncios */}
+        <Route path="/c/:userId" element={<PublicCapture />} />
 
-        {/* AUTH ROUTES (Public) */}
+        {/* AUTH ROUTES */}
         <Route path="/" element={<AuthLayout />}>
           <Route index element={<Navigate to="/login" replace />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
         </Route>
 
-        {/* APP ROUTES (Private - Lifetime Access) */}
+        {/* APP ROUTES (PRIVADAS) */}
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="leads" element={<Leads />} />
@@ -74,9 +64,8 @@ export default function RoutesConfig() {
           <Route path="settings" element={<Settings />} />
         </Route>
 
-        {/* 404 ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );
-                   }
+}
