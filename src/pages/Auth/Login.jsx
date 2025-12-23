@@ -1,64 +1,103 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import Card from '@/components/ui/Card'; 
 import Input from '@/components/ui/Input'; 
+import Button from '@/components/ui/Button';
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
     
-    const { error } = await signIn({ email, password });
-
-    if (error) {
-      alert('Erro ao entrar: ' + error.message);
-    } else {
+    try {
+      const { error: signInError } = await signIn({ email, password });
+      if (signInError) throw signInError;
       navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'Invalid credentials. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
-    <Card className="w-full max-w-sm p-6 sm:p-8">
-      <h1 className="text-3xl font-bold text-muted-900 mb-2">Entrar</h1>
-      <p className="text-muted-500 mb-6">Acesse sua conta LeadPilot.</p>
+    <div className="w-full">
+      <div className="text-center mb-8">
+        <motion.h1 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl font-black text-muted-900 dark:text-white tracking-tight"
+        >
+          Welcome Back
+        </motion.h1>
+        <p className="text-muted-500 dark:text-muted-400 mt-2 font-medium">
+          Enter your credentials to access LeadPilot.
+        </p>
+      </div>
       
-      <form onSubmit={handleLogin} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-5">
         <Input 
           type="email"
-          label="Email"
+          label="Work Email"
+          placeholder="name@company.com"
           icon={Mail}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          error={error && " "} // Visual highlight for error
           required
         />
-        <Input 
-          type="password"
-          label="Senha"
-          icon={Lock}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="btn-primary mt-6 w-full" disabled={loading}>
-          {loading ? 'Entrando...' : 'Acessar'}
-        </button>
+        
+        <div className="space-y-1">
+          <Input 
+            type="password"
+            label="Password"
+            placeholder="••••••••"
+            icon={Lock}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={error} // Display the error message here
+            required
+          />
+          <div className="flex justify-end px-1">
+            <Link 
+              to="/forgot-password" 
+              className="text-[11px] font-bold text-primary-600 hover:text-primary-700 uppercase tracking-wider"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+        </div>
+
+        <Button 
+          type="submit" 
+          variant="primary" 
+          className="w-full h-12 mt-4" 
+          isLoading={loading}
+          icon={ArrowRight}
+        >
+          Sign In to Dashboard
+        </Button>
       </form>
       
-      <div className="mt-6 text-center text-sm">
-        <span className="text-muted-500">Não tem conta? </span>
-        <Link to="/register" className="font-medium text-primary-600 hover:text-primary-700">
-          Crie a sua aqui
-        </Link>
+      <div className="mt-8 text-center pt-6 border-t border-muted-100 dark:border-muted-800">
+        <p className="text-sm text-muted-500 dark:text-muted-400">
+          Don't have an account?{' '}
+          <Link to="/register" className="font-bold text-primary-600 hover:text-primary-700 transition-colors">
+            Get Lifetime Access
+          </Link>
+        </p>
       </div>
-    </Card>
+    </div>
   );
-    }
+}
