@@ -1,50 +1,45 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Handling __dirname in ESM (EcmaScript Modules)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
- * LeadPilot Premium Vite Configuration
- * Optimized for: AI processing, heavy charting, and instant loading.
+ * LeadPilot IA - Vite Configuration (TypeScript Version)
+ * Optimized for: Zero-error deployments and strict path resolution.
  */
 export default defineConfig({
   plugins: [
     react({
-      // Optimized Fast Refresh for faster development of AI components
-      include: "**/*.{jsx,tsx}",
+      // Strict inclusion for TSX/JSX
+      include: "**/*.{tsx,jsx}",
     }),
   ],
   resolve: {
     alias: {
-      // Clean Imports: Use '@/components/...' instead of '../../../components/...'
+      // Direct absolute path mapping
       '@': path.resolve(__dirname, './src'),
     },
   },
   build: {
-    // Premium Performance: Splits code into smaller chunks for faster initial load
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
+        // Advanced code splitting to prevent "White Screen" on slow connections
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['lucide-react', 'framer-motion', 'sonner'],
-          'vendor-charts': ['recharts'],
-          // CORREÇÃO: Removido 'openai' e adicionado o Google AI SDK
-          'vendor-ai': ['@google/generative-ai'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['lucide-react', 'framer-motion', 'sonner', 'clsx', 'tailwind-merge'],
+          'ai-vendor': ['@google/generative-ai'],
+          'db-vendor': ['@supabase/supabase-js'],
+          'chart-vendor': ['recharts'],
         },
       },
     },
-    // Minimizes the chance of visual bugs during heavy AI computations
-    target: 'esnext',
-    sourcemap: false, // Set to true only if you need to debug production
-    minify: 'esbuild',
   },
   server: {
     port: 3000,
     strictPort: true,
-    host: true, // Enables access from your mobile device via local network
+    host: true,
   },
 });
